@@ -1435,3 +1435,27 @@ class TestStream(unittest.TestCase):
             msg="`aforeach` should raise a TypeError if a non async function is passed to it.",
         ):
             next(iter(stream))
+
+    def test_eq(self) -> None:
+        stream = Stream(src)
+        self.assertEqual(
+            stream,
+            stream,
+        )
+        same_stream = Stream(src)
+        self.assertEqual(
+            stream,
+            same_stream,
+        )
+        self.assertEqual(
+            stream.foreach(identity),
+            same_stream.foreach(identity),
+        )
+        self.assertEqual(
+            stream.foreach(identity).truncate(10),
+            same_stream.foreach(identity).truncate(10),
+        )
+        self.assertNotEqual(
+            stream.foreach(print).truncate(10),
+            same_stream.foreach(identity).truncate(10),
+        )

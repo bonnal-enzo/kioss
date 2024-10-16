@@ -102,6 +102,21 @@ class Stream(Iterable[T]):
 
         return self.accept(StrVisitor())
 
+    def __call__(self) -> "Stream[T]":
+        """
+        Iterates over this stream until exhaustion.
+
+        Returns:
+            Stream[T]: self.
+        """
+        self.count()
+        return self
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Stream):
+            return self.source == other.source
+        return False
+
     def accept(self, visitor: "Visitor[V]") -> V:
         """
         Entry point to visit this stream (en.wikipedia.org/wiki/Visitor_pattern).
@@ -138,16 +153,6 @@ class Stream(Iterable[T]):
         """
 
         return sum(1 for _ in self)
-
-    def __call__(self) -> "Stream[T]":
-        """
-        Iterates over this stream until exhaustion.
-
-        Returns:
-            Stream[T]: self.
-        """
-        self.count()
-        return self
 
     def display(self, level: int = logging.INFO) -> "Stream[T]":
         """
@@ -436,6 +441,11 @@ class DownStream(Stream[U], Generic[T, U]):
         """
         return self._upstream
 
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, DownStream):
+            return self.upstream == other.upstream
+        return False
+
 
 class CatchStream(DownStream[T, T]):
     def __init__(
@@ -455,6 +465,17 @@ class CatchStream(DownStream[T, T]):
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_catch_stream(self)
 
+    def __eq__(self, other: object) -> bool:
+        if (
+            isinstance(other, CatchStream)
+            and self._kind == other._kind
+            and self._when == other._when
+            and self._replacement == other._replacement
+            and self._finally_raise == other._finally_raise
+        ):
+            return super().__eq__(other)
+        return False
+
 
 class FilterStream(DownStream[T, T]):
     def __init__(self, upstream: Stream[T], keep: Callable[[T], Any]) -> None:
@@ -464,6 +485,11 @@ class FilterStream(DownStream[T, T]):
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_filter_stream(self)
 
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, FilterStream) and self._keep == other._keep:
+            return super().__eq__(other)
+        return False
+
 
 class FlattenStream(DownStream[Iterable[T], T]):
     def __init__(self, upstream: Stream[Iterable[T]], concurrency: int) -> None:
@@ -472,6 +498,11 @@ class FlattenStream(DownStream[Iterable[T], T]):
 
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_flatten_stream(self)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, FlattenStream) and self._concurrency == other._concurrency:
+            return super().__eq__(other)
+        return False
 
 
 class ForeachStream(DownStream[T, T]):
@@ -492,6 +523,17 @@ class ForeachStream(DownStream[T, T]):
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_foreach_stream(self)
 
+    def __eq__(self, other: object) -> bool:
+        if (
+            isinstance(other, ForeachStream)
+            and self._effect == other._effect
+            and self._concurrency == other._concurrency
+            and self._ordered == other._ordered
+            and self._via == other._via
+        ):
+            return super().__eq__(other)
+        return False
+
 
 class AForeachStream(DownStream[T, T]):
     def __init__(
@@ -509,6 +551,16 @@ class AForeachStream(DownStream[T, T]):
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_aforeach_stream(self)
 
+    def __eq__(self, other: object) -> bool:
+        if (
+            isinstance(other, AForeachStream)
+            and self._effect == other._effect
+            and self._concurrency == other._concurrency
+            and self._ordered == other._ordered
+        ):
+            return super().__eq__(other)
+        return False
+
 
 class GroupStream(DownStream[T, List[T]]):
     def __init__(
@@ -525,6 +577,16 @@ class GroupStream(DownStream[T, List[T]]):
 
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_group_stream(self)
+
+    def __eq__(self, other: object) -> bool:
+        if (
+            isinstance(other, GroupStream)
+            and self._size == other._size
+            and self._interval == other._interval
+            and self._by == other._by
+        ):
+            return super().__eq__(other)
+        return False
 
 
 class MapStream(DownStream[T, U]):
@@ -545,6 +607,17 @@ class MapStream(DownStream[T, U]):
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_map_stream(self)
 
+    def __eq__(self, other: object) -> bool:
+        if (
+            isinstance(other, MapStream)
+            and self._transformation == other._transformation
+            and self._concurrency == other._concurrency
+            and self._ordered == other._ordered
+            and self._via == other._via
+        ):
+            return super().__eq__(other)
+        return False
+
 
 class AMapStream(DownStream[T, U]):
     def __init__(
@@ -562,6 +635,16 @@ class AMapStream(DownStream[T, U]):
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_amap_stream(self)
 
+    def __eq__(self, other: object) -> bool:
+        if (
+            isinstance(other, AMapStream)
+            and self._transformation == other._transformation
+            and self._concurrency == other._concurrency
+            and self._ordered == other._ordered
+        ):
+            return super().__eq__(other)
+        return False
+
 
 class ObserveStream(DownStream[T, T]):
     def __init__(self, upstream: Stream[T], what: str) -> None:
@@ -570,6 +653,11 @@ class ObserveStream(DownStream[T, T]):
 
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_observe_stream(self)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, ObserveStream) and self._what == other._what:
+            return super().__eq__(other)
+        return False
 
 
 class ThrottleStream(DownStream[T, T]):
@@ -590,6 +678,17 @@ class ThrottleStream(DownStream[T, T]):
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_throttle_stream(self)
 
+    def __eq__(self, other: object) -> bool:
+        if (
+            isinstance(other, ThrottleStream)
+            and self._per_second == other._per_second
+            and self._per_minute == other._per_minute
+            and self._per_hour == other._per_hour
+            and self._interval == other._interval
+        ):
+            return super().__eq__(other)
+        return False
+
 
 class TruncateStream(DownStream[T, T]):
     def __init__(
@@ -604,3 +703,13 @@ class TruncateStream(DownStream[T, T]):
 
     def accept(self, visitor: "Visitor[V]") -> V:
         return visitor.visit_truncate_stream(self)
+
+    def __eq__(self, other: object) -> bool:
+        if (
+            isinstance(other, TruncateStream)
+            and self._count == other._count
+            and self._when == other._when
+        ):
+            print(1)
+            return super().__eq__(other)
+        return False
