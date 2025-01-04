@@ -121,9 +121,10 @@ def running(func: Callable[[R, T], R], initial: R) -> Callable[[T], R]:
     TODO
     """
     acc = initial
+
     def _(elem: T) -> R:
         nonlocal acc
         acc = func(acc, elem)
         return acc
-    return _
 
+    return _
