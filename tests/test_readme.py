@@ -89,6 +89,16 @@ class TestReadme(unittest.TestCase):
 
         assert list(zeros) == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
+    def test_running_map_example(self) -> None:
+        from streamable import running
+
+        cumulative_sum: Stream[int] = (
+            integers
+            .map(running(lambda cumsum, i: cumsum + i, initial=0))
+        )
+
+        assert list(cumulative_sum) == [0, 1, 3, 6, 10, 15, 21, 28, 36, 45]
+
     def test_foreach_example(self) -> None:
         state: List[int] = []
         appending_integers: Stream[int] = integers.foreach(state.append)
