@@ -175,6 +175,21 @@ zeros: Stream[int] = (
 assert list(zeros) == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ```
 
+### "running map"
+
+> {TODO: add description}
+
+```python
+from streamable import running
+
+cumulative_sum: Stream[int] = (
+    integers
+    .map(running(lambda cumsum, i: cumsum + i, initial=0))
+)
+
+assert list(cumulative_sum) == [0, 1, 3, 6, 10, 15, 21, 28, 36, 45]
+```
+
 
 
 ## `.foreach`
